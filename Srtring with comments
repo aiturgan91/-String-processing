@@ -1,0 +1,182 @@
+import java.util.Scanner; // Importing Scanner class for user input
+
+public class StringProcessor {
+
+    /**
+     * Method to check if a password is strong.
+     * A strong password must contain at least one uppercase letter,
+     * one lowercase letter, one digit, and one special character.
+     *
+     * @param password The password to check.
+     * @return true if the password is strong, false otherwise.
+     */
+    public boolean isStrongPassword(String password) {
+        boolean hasUppercase = false; // Flag to check if the password has an uppercase letter
+        boolean hasLowercase = false; // Flag to check if the password has a lowercase letter
+        boolean hasDigit = false;     // Flag to check if the password has a digit
+        boolean hasSpecial = false;   // Flag to check if the password has a special character
+
+        // Loop through each character in the password
+        for (char ch : password.toCharArray()) {
+            if (Character.isUpperCase(ch)) { // Check if character is uppercase
+                hasUppercase = true;
+            } else if (Character.isLowerCase(ch)) { // Check if character is lowercase
+                hasLowercase = true;
+            } else if (Character.isDigit(ch)) { // Check if character is a digit
+                hasDigit = true;
+            } else if (!Character.isLetterOrDigit(ch)) { // Check if character is a special symbol
+                hasSpecial = true;
+            }
+        }
+
+        // Return true only if all the conditions are met (uppercase, lowercase, digit, special)
+        return hasUppercase && hasLowercase && hasDigit && hasSpecial;
+    }
+
+    /**
+     * Method to calculate the number of digits in a sentence.
+     *
+     * @param sentence The sentence to analyze.
+     * @return The number of digits in the sentence.
+     */
+    public int calculateDigits(String sentence) {
+        int digitCount = 0; // Initialize counter for digits
+
+        // Loop through each character in the sentence
+        for (char ch : sentence.toCharArray()) {
+            if (Character.isDigit(ch)) { // Check if character is a digit
+                digitCount++; // Increment the digit counter
+            }
+        }
+
+        // Return the total number of digits found
+        return digitCount;
+    }
+
+    /**
+     * Method to calculate the number of words in a sentence.
+     * A word is considered any sequence of characters separated by whitespace.
+     *
+     * @param sentence The sentence to analyze.
+     * @return The number of words in the sentence.
+     */
+    public int calculateWords(String sentence) {
+        // Check for null or empty input to avoid errors
+        if (sentence == null || sentence.trim().isEmpty()) {
+            return 0; // Return 0 if the sentence is empty
+        }
+
+        // Split the sentence into words by whitespace and return the word count
+        String[] words = sentence.trim().split("\\s+");
+        return words.length;
+    }
+
+    /**
+     * Method to evaluate and calculate the result of an arithmetic expression.
+     * Supports basic operations: addition, subtraction, multiplication, and division.
+     *
+     * @param expression The arithmetic expression as a String.
+     * @return The result of the evaluated expression.
+     */
+    public double calculateExpression(String expression) {
+        // Use an anonymous object with a recursive parsing technique
+        return new Object() {
+            int pos = -1, ch;
+
+            // Advance to the next character in the expression
+            void nextChar() {
+                ch = (++pos < expression.length()) ? expression.charAt(pos) : -1;
+            }
+
+            // Eat a specific character and move forward
+            boolean eat(int charToEat) {
+                while (ch == ' ') nextChar(); // Skip whitespace
+                if (ch == charToEat) { // If the current character matches the expected character
+                    nextChar();
+                    return true;
+                }
+                return false;
+            }
+
+            // Parse the full expression
+            double parse() {
+                nextChar(); // Move to the first character
+                double x = parseExpression(); // Start parsing the expression
+                if (pos < expression.length()) throw new RuntimeException("Unexpected: " + (char)ch);
+                return x; // Return the final result
+            }
+
+            // Parse an expression (addition and subtraction)
+            double parseExpression() {
+                double x = parseTerm(); // Parse the first term
+                while (true) {
+                    if (eat('+')) x += parseTerm(); // Addition
+                    else if (eat('-')) x -= parseTerm(); // Subtraction
+                    else return x; // Return result when no more operators
+                }
+            }
+
+            // Parse a term (multiplication and division)
+            double parseTerm() {
+                double x = parseFactor(); // Parse the first factor
+                while (true) {
+                    if (eat('*')) x *= parseFactor(); // Multiplication
+                    else if (eat('/')) x /= parseFactor(); // Division
+                    else return x; // Return result when no more operators
+                }
+            }
+
+            // Parse a factor (numbers, parentheses)
+            double parseFactor() {
+                if (eat('+')) return parseFactor(); // Unary plus
+                if (eat('-')) return -parseFactor(); // Unary minus
+
+                double x;
+                int startPos = this.pos;
+                if (eat('(')) { // Parentheses
+                    x = parseExpression(); // Recursively parse expression inside parentheses
+                    eat(')');
+                } else if ((ch >= '0' && ch <= '9') || ch == '.') { // Number parsing
+                    while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
+                    x = Double.parseDouble(expression.substring(startPos, this.pos)); // Convert to double
+                } else {
+                    throw new RuntimeException("Unexpected: " + (char)ch); // Unexpected character
+                }
+
+                return x; // Return the parsed factor
+            }
+        }.parse();
+    }
+
+    /**
+     * Main method for user interaction and testing the StringProcessor methods.
+     */
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in); // Create a scanner for user input
+        StringProcessor sp = new StringProcessor(); // Instantiate StringProcessor
+
+        // Test isStrongPassword method
+        System.out.print("Enter a password: ");
+        String password = scanner.nextLine(); // Read user input for password
+        boolean isStrong = sp.isStrongPassword(password); // Check if the password is strong
+        System.out.println("Is strong password: " + isStrong); // Output the result
+
+        // Test calculateDigits method
+        System.out.print("Enter a sentence: ");
+        String sentence = scanner.nextLine(); // Read user input for sentence
+        int digitCount = sp.calculateDigits(sentence); // Count the digits in the sentence
+        System.out.println("Number of digits: " + digitCount); // Output the result
+
+        // Test calculateWords method
+        System.out.print("Enter another sentence: ");
+        String sentence2 = scanner.nextLine(); // Read user input for another sentence
+        int wordCount = sp.calculateWords(sentence2); // Count the words in the sentence
+        System.out.println("Number of words: " + wordCount); // Output the result
+
+        // Test calculateExpression method
+        System.out.print("Enter an arithmetic expression: ");
+        String expression = scanner.nextLine(); // Read user input for arithmetic expression
+        double result = sp.calculateExpression(expression); // Evaluate the expression
+        System.out.println("Result of the expression: " + result); // Output the result
+    }
+}
